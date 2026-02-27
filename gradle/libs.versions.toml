@@ -8,6 +8,7 @@ appcompat = "1.7.1"
 material = "1.13.0"
 constraintlayout = "2.2.1"
 navigationFragmentKtx = "2.9.6"
+protobufKotlin = "4.34.0-RC2"
 room = "2.8.4"
 lifecycle = "2.10.0"
 preference = "1.2.1"
@@ -21,6 +22,7 @@ jdom2 = { module = "org.jdom:jdom2", version.ref = "jdom2" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref = "protobufKotlin" }
 room-runtime = {group = "androidx.room", name = "room-runtime", version.ref = "room"}
 room-ktx = {group = "androidx.room", name = "room-ktx", version.ref = "room"}
 room-compiler = {group = "androidx.room", name = "room-compiler", version.ref = "room" }

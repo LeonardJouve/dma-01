@@ -72,4 +72,5 @@ dependencies {
     ksp(libs.room.compiler)
     androidTestImplementation(libs.room.testing)
 
+    implementation(libs.protobuf.kotlin)
 }
