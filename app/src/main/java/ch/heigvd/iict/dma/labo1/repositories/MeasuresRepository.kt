@@ -6,12 +6,21 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
 import ch.heigvd.iict.dma.labo1.models.*
 import ch.heigvd.iict.dma.protobuf.MeasuresOuterClass
+import com.google.gson.internal.GsonBuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jdom2.DocType
+import org.jdom2.Document
+import org.jdom2.Element
+import org.jdom2.output.Format
+import org.jdom2.output.XMLOutputter
+import java.io.StringWriter
 import java.net.HttpURLConnection
 import java.net.HttpURLConnection.HTTP_OK
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.zip.Deflater
 import java.util.zip.DeflaterInputStream
 import java.util.zip.DeflaterOutputStream
@@ -93,8 +102,40 @@ class MeasuresRepository(private val scope : CoroutineScope,
                     }
                     Serialisation.XML -> {
                         connection.setRequestProperty("Content-Type", "application/xml")
-                        // TODO
-                        throw NotImplementedError()
+
+                        val root = Element("measures")
+                        val doc = Document(root)
+
+                        for (m in measures.value!!) {
+
+                            val measure = Element("measure")
+                                .setAttribute("id", m.id.toString())
+                                .setAttribute("status", m.status.toString())
+
+                            measure.addContent(Element("type").setText(m.type.toString()))
+                            measure.addContent(Element("value").setText(m.value.toString()))
+
+                            val sdf = SimpleDateFormat(
+                                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                                Locale.getDefault()
+                            )
+                            sdf.timeZone = m.date.timeZone
+                            measure.addContent(Element("date").setText(sdf.format(m.date.time)))
+
+                            root.addContent(measure)
+                        }
+
+                        doc.setDocType(DocType("measures", "https://mobile.iict.ch/measures.dtd"))
+
+                        val outputter = XMLOutputter(Format.getPrettyFormat())
+
+                        /*
+                        val writer = StringWriter()
+                        outputter.output(doc, writer)
+                        Log.d("XML_OUTPUT", writer.toString())
+                        */
+
+                        outputter.outputString(doc).toByteArray()
                     }
                 }
 
@@ -119,7 +160,7 @@ class MeasuresRepository(private val scope : CoroutineScope,
                 } else {
                     connection.getInputStream()
                 }
-
+/*
                 inputStream.use {
                     val measuresAck = MeasuresOuterClass.MeasuresAck.newBuilder().mergeFrom(it).build()
                     measuresAck.measuresList.forEach { ackMeasure ->
@@ -131,11 +172,10 @@ class MeasuresRepository(private val scope : CoroutineScope,
                             }
                         }
                     }
-                }
+                }*/
             }
 
             _requestDuration.postValue(elapsed)
         }
     }
-
 }
