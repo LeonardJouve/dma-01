@@ -1,5 +1,6 @@
 package ch.heigvd.iict.dma.labo1.repositories
 
+import android.util.JsonReader
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -20,6 +21,8 @@ import ch.heigvd.iict.dma.protobuf.measure as protobufMeasure
 import ch.heigvd.iict.dma.protobuf.measures as protobufMeasures
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.zip.Inflater
+import java.util.zip.InflaterInputStream
 
 class MeasuresRepository(private val scope : CoroutineScope,
                          private val dtd : String = "https://mobile.iict.ch/measures.dtd",
@@ -128,7 +131,7 @@ class MeasuresRepository(private val scope : CoroutineScope,
                 }
 
                 val inputStream = if (connection.getHeaderField("X-Content-Encoding") == Compression.DEFLATE.name) {
-                    DeflaterInputStream(connection.getInputStream(), deflater)
+                    InflaterInputStream(connection.getInputStream(), Inflater(true))
                 } else {
                     connection.getInputStream()
                 }
@@ -149,7 +152,8 @@ class MeasuresRepository(private val scope : CoroutineScope,
                         }
 
                         Serialisation.JSON -> {
-                            val responseString = stream.bufferedReader().readText()
+                            val bufferedReader = stream.bufferedReader()
+                            val responseString = bufferedReader.readText()
                             val jsonArray = org.json.JSONArray(responseString)
                             for (i in 0 until jsonArray.length()) {
                                 val jsonObject = jsonArray.getJSONObject(i)
