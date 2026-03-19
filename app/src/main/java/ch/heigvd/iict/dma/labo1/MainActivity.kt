@@ -1,6 +1,7 @@
 package ch.heigvd.iict.dma.labo1
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -12,6 +13,8 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import ch.heigvd.iict.dma.labo1.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.Firebase
+import com.google.firebase.messaging.messaging
 
 class MainActivity : AppCompatActivity() {
 
@@ -51,6 +54,15 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+
+        Firebase.messaging.subscribeToTopic("monTopic")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d("MainActivity", "Success while subscribing to firebase")
+                } else {
+                    Log.e("MainActivity", "Error while subscribing to firebase")
+                }
+            }
     }
 
 }

@@ -3,6 +3,8 @@ import com.android.build.api.dsl.ApplicationExtension
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.devtools.ksp)
+//    id("com.android.application")
+    id("com.google.gms.google-services")
 }
 
 
@@ -73,4 +75,6 @@ dependencies {
     androidTestImplementation(libs.room.testing)
 
     implementation(libs.protobuf.kotlin)
+    implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
+    implementation("com.google.firebase:firebase-messaging")
 }

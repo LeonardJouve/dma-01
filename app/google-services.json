@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "104365055951",
+    "project_id": "dma-labo1-b9e64",
+    "storage_bucket": "dma-labo1-b9e64.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104365055951:android:83fe4873fe0e59fc5d7cba",
+        "android_client_info": {
+          "package_name": "ch.heigvd.iict.dma.labo1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTYKfPHwGu-DyQMB4gwOndVfeGn2DP-8c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
