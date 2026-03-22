@@ -1,7 +1,5 @@
 package ch.heigvd.iict.dma.labo1.repositories
 
-import android.util.JsonReader
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
@@ -23,7 +21,6 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.zip.Deflater
-import java.util.zip.DeflaterInputStream
 import java.util.zip.DeflaterOutputStream
 import kotlin.system.measureTimeMillis
 import ch.heigvd.iict.dma.protobuf.measure as protobufMeasure
@@ -141,7 +138,7 @@ class MeasuresRepository(private val scope : CoroutineScope,
                             root.addContent(measure)
                         }
 
-                        doc.setDocType(DocType("measures", "https://mobile.iict.ch/measures.dtd"))
+                        doc.setDocType(DocType("measures", dtd))
 
                         val outputter = XMLOutputter(Format.getPrettyFormat())
 
@@ -191,7 +188,6 @@ class MeasuresRepository(private val scope : CoroutineScope,
                                 }
                             }
                         }
-
                         Serialisation.JSON -> {
                             val bufferedReader = stream.bufferedReader()
                             val responseString = bufferedReader.readText()
@@ -210,7 +206,6 @@ class MeasuresRepository(private val scope : CoroutineScope,
                             }
                         }
                         Serialisation.XML -> {
-
                             val saxBuilder = SAXBuilder()
                             saxBuilder.setFeature("http://xml.org/sax/features/external-general-entities", false)
 
