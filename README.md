@@ -89,4 +89,28 @@ En 5G, la transmission des données est rapide alors le gains de temps sur la co
 
 En 2G, le gain est plus important car la transmission des données est lente. Diminuer la quantité de données à transmettre malgré un coup de calcul plus important est intéressant.
 
+#### 2. Requêtes au format GraphQL
 
+
+#### 3. Push de message (Firebase Cloud Messaging)
+
+Nous avons ajouté FCM comme indiqué dans le document fournis.
+
+Notre application affiche le dernier message reçu et permet également de recevoir une command `clear` permettant de supprimer les anciens messages stockés. (`command="clear"`)
+
+FCM attribut à chaque instance de l'application un token permettant de l'identifier afin d'envoyer des messages au bon appareils.
+Il est important de garder à jour ces token à chaque fois qu'un nouveau est généré.
+On peut voir celà à l'aide de la méthode `onNewToken` du service Firebase de notre application.
+Un premier token est généré au premier lancement de l'application.
+La documentation FCM indique 4 cas dans lesquels un nouveau token pourrait être attribué.
+- L'application est restaurée sur un nouvel appareil
+- L'utilisateur désinstalle ou réinstalle l'application
+- L'utilisateur efface les données de l'application
+- L'application redevient active une fois que FCM a expiré son jeton existant.
+
+Ce token permet d'identifier auprès de FCM les différents appareils associés à l'utilisateur.
+Pour une application mobile comme *WhatsApp*, les tokens assignés par FCM doivent être transmis au backend de *Whatsapp* qui va maintenir une table d'association (utilisateur -> tokens).
+Ainsi, quand un utilisateur envoie un message, le serveur peut récupérer les tokens associés au destinataire du message.
+Il peut ensuite envoyer une requête à FCM afin d'envoyer un message push au appareils associés aux tokens.
+
+La méthode `onNewToken` permet alors de détecter un changement de token afin de permettre à l’app de mettre à jour le backend.
