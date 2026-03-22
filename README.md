@@ -1,0 +1,92 @@
+# DMA Labo01
+*Loris Marzullo, Zaid Schouwey, Léonard Jouve*
+
+## Protocoles applicatifs mobiles
+
+### Introduction
+Durant ce laboratoire, nous avons pu découvrir et comparer différents protocoles applicatifs mobiles:
+- REST avec plusieurs manières de sérialiser et compresser les données (JSON, XML, Protobuf)
+- GraphQL
+- Un service de push de messages avec Firebase Cloud Messaging
+
+### Manipulations
+
+#### 1. Echange d’objets avec le serveur
+
+Pour l'envoie de données au format JSON, nous avons simplement construit un tableau JSON à partir des mesures qui est ensuite transmit au serveur avec le header `Content-Type: "application/json"`.
+
+```kotlin
+val jsonArray = JSONArray()
+_measures.value?.forEach { m ->
+    val jsonObject = JSONObject()
+    jsonObject.put("id", m.id)
+    jsonObject.put("status", m.status)
+    jsonObject.put("type", m.type.name)
+    jsonObject.put("value", m.value)
+    jsonObject.put("date", m.date.timeInMillis)
+    jsonArray.put(jsonObject)
+}
+
+jsonArray.toString().toByteArray()
+```
+
+L'envoie de données au format XML est fait à l'aide de la librairie `jdom2`. Un dtd permettant de spécifier le format des données transmises est également transmit.
+
+Finalement l'envoie des données au format Protobuf est fait à l'aide du code généré par l'utilitaire protobuf à partir du fichier `.proto`.
+
+Afin de compresser les données si souhaité, nous wrappons simplement le stream d'entrées avec un `DeflaterOutputStream`
+
+```kotlin
+val outputStream = if (compression == Compression.DEFLATE) {
+    val deflater = Deflater(Deflater.DEFAULT_COMPRESSION, true)
+    DeflaterOutputStream(connection.outputStream, deflater)
+} else {
+    connection.outputStream
+}
+```
+
+Idem pour le stream permettant de lire la réponse.
+
+```kotlin
+val inputStream = if (connection.getHeaderField("X-Content-Encoding") == Compression.DEFLATE.name) {
+    InflaterInputStream(connection.getInputStream(), Inflater(true))
+} else {
+    connection.getInputStream()
+}
+```
+
+De la même manière que pour la sérialization, la déserialization est faites à l'aide de l'API JSON, jdom2 ainsi que le code généré par Protobuf.
+
+
+Comparatif avec une vitesse réseau équivalent 5G
+
+| Format   | Taille payload (bytes) | Taille reçue (bytes) | Gain en volume (bytes) | Temps sans compression (ms) | Temps avec compression (ms) | Gain de temps (ms) |
+|----------|------------------------|----------------------|------------------------|-----------------------------|-----------------------------|--------------------|
+| XML      |  602                   | 283                  | 319                    | 49                          | 32                          | 17                 |
+| JSON     | 271                    | 157                  | 114                    | 42                          | 39                          | 3                  |
+| Protobuf | 93                     | 92                   | 1                      | 32                          | 29                          | 3                  |
+
+Comparatif avec une vitesse réseau équivalent 2G
+
+| Format   | Taille payload (bytes) | Taille reçue (bytes) | Gain en volume (bytes) | Temps sans compression (ms) | Temps avec compression (ms) | Gain de temps (ms) |
+|----------|------------------------|----------------------|------------------------|-----------------------------|-----------------------------|--------------------|
+| XML      | 602                    | 283                  | 319                    | 120                         | 99                          | 21                 |
+| JSON     | 271                    | 157                  | 114                    | 60                          | 45                          | 15                 |
+| Protobuf | 93                     | 92                   | 1                      | 40                          | 35                          | 5                  |
+
+Pourcentage de gain par format:
+- XML 53%
+- JSON 42%
+- Protobuf 1%
+
+On constate alors que de manière générale, le format XML est le plus lourd. Ce n'est pas étonnant car il inclus un grande quantité de texte nécéssaire à la structure XML qui ne fait pas partie des données pures.
+Vient ensuite le format JSON qui est tout de même moins lourd que XML car moins verbeux.
+Finalement le format Protobuf est le plus léger des 3. En effet, il s'agit d'un format binaire qui inclut uniquement les valeurs des différents attributs.
+
+On peut également noter que le format XML et JSON on un bien plus gros bénéfice à compresser leurs données que le format Protobuf.
+
+En 5G, la transmission des données est rapide alors le gains de temps sur la compression des données est faible car le temps de calcul nécéssaire à la compression / décompression annule ce gain.
+
+En 2G, le gain est plus important car la transmission des données est lente. Diminuer la quantité de données à transmettre malgré un coup de calcul plus important est intéressant.
+
+
