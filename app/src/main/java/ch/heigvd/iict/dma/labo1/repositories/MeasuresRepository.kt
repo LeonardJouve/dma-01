@@ -141,13 +141,6 @@ class MeasuresRepository(private val scope : CoroutineScope,
                         doc.setDocType(DocType("measures", dtd))
 
                         val outputter = XMLOutputter(Format.getPrettyFormat())
-
-                        /*
-                        val writer = StringWriter()
-                        outputter.output(doc, writer)
-                        Log.d("XML_OUTPUT", writer.toString())
-                        */
-
                         outputter.outputString(doc).toByteArray()
                     }
                 }
