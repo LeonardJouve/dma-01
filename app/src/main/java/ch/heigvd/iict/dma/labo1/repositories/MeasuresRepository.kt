@@ -1,5 +1,6 @@
 package ch.heigvd.iict.dma.labo1.repositories
 
+import android.util.JsonReader
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -27,6 +28,10 @@ import java.util.zip.DeflaterOutputStream
 import kotlin.system.measureTimeMillis
 import ch.heigvd.iict.dma.protobuf.measure as protobufMeasure
 import ch.heigvd.iict.dma.protobuf.measures as protobufMeasures
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.zip.Inflater
+import java.util.zip.InflaterInputStream
 
 class MeasuresRepository(private val scope : CoroutineScope,
                          private val dtd : String = "https://mobile.iict.ch/measures.dtd",
@@ -97,8 +102,19 @@ class MeasuresRepository(private val scope : CoroutineScope,
                     }
                     Serialisation.JSON -> {
                         connection.setRequestProperty("Content-Type", "application/json")
-                        // TODO
-                        throw NotImplementedError()
+
+                        val jsonArray = JSONArray()
+                        _measures.value?.forEach { m ->
+                            val jsonObject = JSONObject()
+                            jsonObject.put("id", m.id)
+                            jsonObject.put("status", m.status)
+                            jsonObject.put("type", m.type.name)
+                            jsonObject.put("value", m.value)
+                            jsonObject.put("date", m.date.timeInMillis)
+                            jsonArray.put(jsonObject)
+                        }
+
+                        jsonArray.toString().toByteArray()
                     }
                     Serialisation.XML -> {
                         connection.setRequestProperty("Content-Type", "application/xml")
@@ -156,17 +172,15 @@ class MeasuresRepository(private val scope : CoroutineScope,
                 }
 
                 val inputStream = if (connection.getHeaderField("X-Content-Encoding") == Compression.DEFLATE.name) {
-                    DeflaterInputStream(connection.getInputStream(), deflater)
+                    InflaterInputStream(connection.getInputStream(), Inflater(true))
                 } else {
                     connection.getInputStream()
                 }
 
-                when (serialisation) {
-                    Serialisation.PROTOBUF -> {
-
-                        inputStream.use {
-                            val measuresAck =
-                                MeasuresOuterClass.MeasuresAck.newBuilder().mergeFrom(it).build()
+                inputStream.use { stream ->
+                    when(serialisation){
+                        Serialisation.PROTOBUF -> {
+                            val measuresAck = MeasuresOuterClass.MeasuresAck.newBuilder().mergeFrom(stream).build()
                             measuresAck.measuresList.forEach { ackMeasure ->
                                 _measures.value?.find { m -> m.id == ackMeasure.id }?.let {
                                     it.status = when (ackMeasure.status) {
@@ -177,21 +191,36 @@ class MeasuresRepository(private val scope : CoroutineScope,
                                 }
                             }
                         }
-                    }
-                    Serialisation.JSON -> {
-                        // TODO
-                    }
-                    Serialisation.XML -> {
 
-                        val saxBuilder = SAXBuilder()
-                        saxBuilder.setFeature("http://xml.org/sax/features/external-general-entities", false)
-
-                        saxBuilder.build(InputStreamReader(inputStream))
-                            .rootElement
-                            .getChildren("measure")
-                            .associate {
-                                it.getAttributeValue("id").toInt() to Measure.Status.valueOf(it.getAttributeValue("status"))
+                        Serialisation.JSON -> {
+                            val bufferedReader = stream.bufferedReader()
+                            val responseString = bufferedReader.readText()
+                            val jsonArray = org.json.JSONArray(responseString)
+                            for (i in 0 until jsonArray.length()) {
+                                val jsonObject = jsonArray.getJSONObject(i)
+                                val id = jsonObject.getInt("id")
+                                val statusString = jsonObject.getString("status")
+                                _measures.value?.find { m -> m.id == id }?.let { measure ->
+                                    measure.status = when (statusString) {
+                                        "OK" -> Measure.Status.OK
+                                        "NEW" -> Measure.Status.NEW
+                                        else -> Measure.Status.ERROR
+                                    }
+                                }
                             }
+                        }
+                        Serialisation.XML -> {
+
+                            val saxBuilder = SAXBuilder()
+                            saxBuilder.setFeature("http://xml.org/sax/features/external-general-entities", false)
+
+                            saxBuilder.build(InputStreamReader(stream))
+                                .rootElement
+                                .getChildren("measure")
+                                .associate {
+                                    it.getAttributeValue("id").toInt() to Measure.Status.valueOf(it.getAttributeValue("status"))
+                                }
+                        }
                     }
                 }
             }
@@ -199,4 +228,5 @@ class MeasuresRepository(private val scope : CoroutineScope,
             _requestDuration.postValue(elapsed)
         }
     }
+
 }
