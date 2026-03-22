@@ -91,6 +91,9 @@ En 2G, le gain est plus important car la transmission des données est lente. Di
 
 #### 2. Requêtes au format GraphQL
 
+Par soucis de factorisation, nous avons créé une fonction supplémentaire `postQuery`. Celle-ci se charge d'établir la connection avec le serveur, d'envoyer une query passée en paramètre et de retourner la réponse reçue. Cela facilite l'ajout de requêtes, puisqu'il suffit d'ajouter une fonction supplémentaire faisant un appel à `postQuery`, avec la query en question et la logique de parsing correspondante.
+
+Pour ce qui est d'une utilisation mobile de cette partie de l'application, certains aspects pourraient être améliorés. Tout d'abord, le fragment ne sauvegarde pas l'auteur et les livres actuellement affichés. Cela signifie que si le fragment est recréée (par exemple, en changeant d'onglet ou l'orientation du téléphone), l'affichage se réinitialisera sur le premier auteur de la liste (ici, J.K. Rowling). De plus, la liste des auteurs entière est demandée au serveur à chacune de ces réinitialisations. Sachant que la DB comporte près de 9'200 auteurs, non seulement cela crée des réponses lourdes de la part du serveur, mais une telle quantité de données est inutile à afficher en tout temps (le menu déroulant est d'ailleurs très peu pratique, puisque tous les auteurs sont affichés en une fois). Pour optimiser cela, l'application pourrait avoir une barre de recherche, qui récupère un sous-ensemble d'auteurs correspondant au texte saisi. Une autre manière de faire serait de récupérer la liste des auteurs une seule fois et de la garder en cache pour éviter les appels répétés.
 
 #### 3. Push de message (Firebase Cloud Messaging)
 
